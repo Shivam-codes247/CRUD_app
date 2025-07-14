@@ -1,51 +1,70 @@
 const express = require("express");
+const connectToDB = require("./src/db/db");
+const noteModel = require("./src/models/notes.model");
 
 const app = express();
 
 app.use(express.json());
-
-let notes = [];
 
 app.get("/", (req, res) => {
   res.send("hello to my page");
 });
 
 // Post method to create notes
-app.post("/notes", (req, res) => {
-  console.log(req.body);
-  notes.push(req.body);
+app.post("/notes", async(req, res) => {
+  const { title, content } = req.body;
+
+  await noteModel.create({
+    title , content
+  })
+  
   res.json({
     message: "Post method successfull",
   });
 });
 
 //GET method to read notes
-app.get("/notes", (req, res) => {
-  res.json(notes);
+app.get("/notes", async(req, res) => {
+  
+  const notes = await noteModel.find()
+
+  res.json({
+    message:"notes fetched successfully",
+    notes
+  })
 });
 
 // PATCH method to update notes
-app.patch("/notes/:index", (req, res) => {
-  const index = req.params.index;
+app.patch("/notes/:id", async(req, res) => {
+
+  const noteId = req.params.id;
   const { title } = req.body;
 
-  notes[index].title = title;
-
+  await noteModel.findOneAndUpdate({
+    _id:noteId
+  },{
+    title:title
+  })
+  
   res.json({
     message: "Patch method successfull",
   });
 });
 
 // DELETE method to delete notes
-app.delete("/notes/:index", (req, res) => {
-  const index = req.params.index;
-  delete notes[index];
+app.delete("/notes/:id", async(req, res) => {
+  const noteId = req.params.id;
+
+  await noteModel.findOneAndDelete({
+    _id: noteId
+  });
 
   res.json({
     message: "Delete method succesfull",
   });
 });
 
+connectToDB();
 app.listen(3000, () => {
   console.log("server is running on port 3000");
 });
